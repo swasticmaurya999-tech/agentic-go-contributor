@@ -1,0 +1,13 @@
+diff --git a/command.go b/command.go
+index f032dbc..57c9ffe 100644
+--- a/command.go
++++ b/command.go
+@@ -692,7 +692,7 @@ Loop:
+ }
+ 
+ func isFlagArg(arg string) bool {
+-	return ((len(arg) >= 3 && arg[1] == '-') ||
++	return ((len(arg) >= 3 && arg[0] == '-' && arg[1] == '-') ||
+ 		(len(arg) >= 2 && arg[0] == '-' && arg[1] != '-'))
+ }
+ 

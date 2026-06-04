@@ -1,0 +1,29 @@
+# Non-secret configuration. Secrets/keys live in .env (env vars override this file).
+
+llm:
+  provider: groq        # override with LLM_PROVIDER in .env (groq | gemini | openai | anthropic)
+  model: openai/gpt-oss-120b   # strong free tool-calling + coding model on Groq (proven on cobra #1816)
+
+agent:
+  max_turns: 30
+  temperature: 0.0
+
+# Repositories the agent is allowed to operate on (the assignment's approved set).
+approved_repos:
+  - gin-gonic/gin
+  - spf13/cobra
+  - go-playground/validator
+  - golangci/golangci-lint
+
+paths:
+  work_dir: .work       # where repos are cloned
+  out_dir: out          # where patches / PR text are written
+
+# Known "pre-fix" commits (the commit just before the fixing PR was merged) for our
+# already-fixed demo issues, so the bug is present when we run. For other issues the
+# system auto-detects this, or you can pass --base-sha. (Open issues use the default branch.)
+demo_base_shas:
+  "https://github.com/spf13/cobra/issues/1816": bf11ab6
+  "https://github.com/spf13/cobra/issues/1651": dbf85f6104904d539cabceebec234e817fa0df0c
+  "https://github.com/spf13/cobra/issues/1777": cc7e235fc26cfd0b5ae36c960f399eea4badaa3e
+  "https://github.com/go-playground/validator/issues/1576": 8eb2659789a33bda9262ce62eed2d714539dc8c5

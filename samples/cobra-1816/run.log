@@ -1,0 +1,62 @@
+[fetch]   spf13/cobra#1816
+[fetch]   "Completion detects non-flag argument as flag"
+[setup]   Base commit: bf11ab6
+[setup]   Repo ready at D:\code\agentic-go-contributor\.work\cobra on branch 'fix/1816-completion-detects-non-flag'
+[setup]   Establishing test baseline (runs the suite once)...
+[setup]   Baseline: 1 pre-existing failure(s) will be ignored.
+[plan]    Analysing the issue and planning a fix...
+[search]  Searching the codebase for: isFlagArg
+[turn 1] search_code({"max_results": 20, "query": "isFlagArg"})
+[turn 1] -> command.go:694:func isFlagArg(arg string) bool {
+command.go:786:		case isFlagArg(arg):
+completions.go:361:	// a '-' we know it is a flag.  We cannot use isFlagArg() here as it requires
+completions.go:575:	// a '-' we know it is a flag.  We cannot use isFlagArg() here as that function
+completions.go:601:			if isFlagArg(prevArg) {
+[read]    Reading command.go
+[turn 2] read_file({"line_end": 720, "line_start": 650, "path": "command.go"})
+[turn 2] -> ERROR: bad arguments for read_file: Tools._tool_read_file() got an unexpected keyword argument 'line_end'
+[read]    Reading command.go (lines 620-720)
+[turn 3] read_file({"end_line": 720, "path": "command.go", "start_line": 620})
+[turn 3] -> 620			return args
+621		}
+622		c.mergePersistentFlags()
+623	
+624		commands := []string{}
+625		flags := c.Flags()
+626	
+627	Loop:
+628		for len(args) > 0 {
+629			s := args[0]
+630			args = args[1:]
+631			switch {
+632			case s == "--":
+633				// "--" terminates the flags
+634				break Loop
+635			case strings.HasPrefix(s, "--") && !strings.Contains(s, "=") && !hasNoOptDefVal(s[2:], flags):
+636				// If '--flag arg' then
+637				// delete arg from args.
+638				fallthrough // (do the same as below)
+639			case strings.HasPrefix(s, "-") && !strings.Contains(s, "=") && len(s) == 2 && !shortHasNoOptDefVal(s[1:], flags):
+640				// If '-f arg' then
+641				// delete 'arg' from args or break the loop if len(args) <= 1.
+642				if len(args) <= 1 {
+643					break Loop
+644				} else {
+645					args = args[1:]
+646	
+[edit]    Applying a fix to command.go
+[turn 4] replace_lines({"end_line": 697, "new_string": "func isFlagArg(arg string) bool {\n    return ((len(arg) >= 3 && arg[0] == '-' && arg[1] == '-') ||\n        (len(arg) >= 2 && arg[0] == '-' && arg[1] != '-'))\n}", "path": "command.go", "start_line": 694})
+[turn 4] -> Replaced lines 694-697 in command.go (gofmt clean). New surrounding context:
+692	}
+693	
+694	func isFlagArg(arg string) bool {
+695		return ((len(arg) >= 3 && arg[0] == '-' && arg[1] == '-') ||
+696			(len(arg) >= 2 && arg[0] == '-' && arg[1] != '-'))
+697	}
+698	
+699	// Find the target command given the args and command tree
+[test]    Running tests (./...)
+[turn 5] run_tests({"package": "./..."})
+[turn 5] -> RELEVANT TESTS PASS. Ignored 1 pre-existing (environment-specific) failure(s) that also fail on the unmodified repo: ['TestFailGenFishCompletionFile']. If your fix is complete, reply 'DONE:' now (a regression test is encouraged but optional).
+          -> tests passed
+[verify]  Fix is validated (changes + tests pass) — finishing despite a model error.

@@ -1,0 +1,28 @@
+Title: Completion detects non-flag argument as flag
+
+We have encountered some odd behavior in the auto completion.
+It appears that arguments with a dash as the second character are detected as
+flags by mistake.
+
+Minimal reproducer:
+
+    package main
+
+    import "github.com/spf13/cobra"
+
+    func main() {
+        root := &cobra.Command{Use: "root"}
+        root.SetArgs([]string{"__complete", "1-ff00:0:1", ""})
+        root.Execute()
+    }
+
+which results in:
+
+    [Debug] [Error] Subcommand 'root' does not support flag '1'
+    :0
+    Completion ended with directive: ShellCompDirectiveDefault
+
+The argument "1-ff00:0:1" (and similar values like "1-123") is incorrectly
+classified as a flag during shell completion. It should be treated as a normal
+positional argument. Long flags should only be detected when the argument
+actually starts with "--".
