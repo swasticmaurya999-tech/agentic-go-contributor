@@ -76,7 +76,7 @@ A fully verified, committed run for **cobra #1816** is in `samples/cobra-1816/`.
 
 ## Quick start
 
-### 0. Get an API key (Groq — free, ≈2 minutes, no credit card)
+### 1. Get an API key (Groq — free, ≈2 minutes, no credit card)
 
 1. Go to **https://console.groq.com** → sign in (Google/GitHub).
 2. **API Keys** (left sidebar) → **Create API Key** → name it → **Submit**.
