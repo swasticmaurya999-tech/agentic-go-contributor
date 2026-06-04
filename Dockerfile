@@ -13,6 +13,11 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+
+# Stream the agent's progress live to `docker run` (no TTY = block-buffered stdout otherwise,
+# which makes the long clone/go-test steps look like the container is hung).
+ENV PYTHONUNBUFFERED=1
+
 COPY requirements.txt ./
 RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt
 COPY . .

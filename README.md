@@ -103,18 +103,26 @@ Then pick **one** of the two paths below.
 
 ### Path A — Docker (recommended; nothing installed on your host)
 
-Requires only **Docker**. The image bundles Go + Python + git; everything installs *inside*
-the image, so your machine stays clean.
+Requires only **Docker** — you do **not** need Python, Go, or git installed on your machine.
+The image bundles the **entire toolchain** (Go + `gofmt` + git + Python + pip deps) and the
+default config, all *inside* the image, so your host stays clean. If you don't have Docker,
+get it from **[docs.docker.com/get-docker](https://docs.docker.com/get-docker/)**.
+
+Run both commands **from inside the folder you cloned in step 1** (the `docker build` reads the
+`Dockerfile` there). The build is a one-time step; after that you only re-run `docker run`.
 
 ```bash
+# 1. build the image once (installs Go, git, Python + deps inside it — takes a few minutes)
 docker build -t go-contributor .
+
+# 2. run it — outputs land in ./out on your host via the volume mount
 
 # Linux/macOS:
 docker run --rm -e GROQ_API_KEY=<your-key> -v "${PWD}/out:/app/out" \
   go-contributor run --issue <github-issue-url>
 
 # Windows PowerShell:
-docker run --rm -e GROQ_API_KEY=<your-key> -v "${PWD}\out:/app/out" `
+docker run --rm -e GROQ_API_KEY=<your-key> -v "${PWD}/out:/app/out" `
   go-contributor run --issue <github-issue-url>
 ```
 
@@ -122,27 +130,115 @@ Replace `<github-issue-url>` with any approved-repo issue. To try a **known-good
 verified test issue **`https://github.com/spf13/cobra/issues/1816`** — outputs then land in
 `./out/cobra-1816/` (mounted from the container).
 
+> **Using a different provider?** Add `-e LLM_PROVIDER=<name>` and that provider's key, e.g.
+> `-e LLM_PROVIDER=openai -e OPENAI_API_KEY=<key>` (see [Choosing your LLM](#choosing-your-llm)).
+>
+> **Note:** the `--open-pr` flag is **not** available in the Docker image (it needs the `gh`
+> CLI, which isn't bundled). Docker still produces the full deliverable — branch, `patch.diff`,
+> and `pr.md`; to actually push a PR to your fork, use the **native** path (Path B) with `gh`.
+
 ### Path B — Native (install deps yourself, then run)
 
-**Prerequisites:** Python 3.11+, Go (1.21+), git. (Optional: `gh` CLI, only for `--open-pr`.)
+This path needs **three tools on your machine**, because the agent shells out to them:
+
+- **Python 3.11+** (with `pip`) — runs this agent itself.
+- **Go 1.21+** — the agent runs `go build` / `go test` and auto-`gofmt`s every Go edit.
+  `gofmt` ships *inside* the Go toolchain, so installing Go covers it (nothing extra needed).
+- **git** (any recent) — clone the target repo, `git grep`, `git diff`, branch.
+
+> The `gh` CLI is **optional** and only used by `--open-pr`; you can ignore it otherwise.
+
+#### 1. Install the toolchain (skip anything you already have)
+
+**Windows** (PowerShell, via [winget](https://learn.microsoft.com/windows/package-manager/winget/) — preinstalled on Windows 11):
+
+```powershell
+winget install --id Python.Python.3.12 -e
+winget install --id GoLang.Go -e
+winget install --id Git.Git -e
+# close & reopen PowerShell afterwards so PATH picks up the new tools
+```
+
+**macOS** (via [Homebrew](https://brew.sh)):
 
 ```bash
-# (you already cloned the repo + cd'd into it in step 1 above)
+brew install python@3.12 go git
+```
 
-# 1. create a virtualenv and install Python deps
+**Linux** (Debian/Ubuntu):
+
+```bash
+sudo apt-get update
+sudo apt-get install -y python3 python3-pip python3-venv git
+# Ubuntu's apt Go can be old; if `go version` is < 1.21, install the current one from go.dev
+sudo apt-get install -y golang-go    # then verify the version below
+```
+
+No package manager, or a version is too old? Use the official installers directly:
+[Python](https://www.python.org/downloads/), [Go](https://go.dev/doc/install),
+[git](https://git-scm.com/downloads).
+
+**Verify all three are on your PATH before continuing:**
+
+```bash
+python --version    # 3.11+   (use python3 on macOS/Linux if `python` is missing)
+go version          # 1.21+
+git --version
+```
+
+#### 2. Set up and run the agent
+
+You already cloned the repo and `cd`'d into it in step 1. Now create an isolated Python
+environment, **activate** it, install the deps into it, add your key, and run.
+
+**a. Create the virtual environment** (run once per clone):
+
+```bash
 python -m venv .venv
-# Windows:  .venv\Scripts\activate
-# bash:     source .venv/bin/activate
+```
+
+> Use `python3` instead of `python` on macOS/Linux if `python` isn't found.
+
+**b. Activate it** (do this in every new terminal session) — run the line for *your* shell:
+
+```powershell
+# Windows — PowerShell:
+.venv\Scripts\Activate.ps1
+```
+
+```bat
+:: Windows — cmd.exe:
+.venv\Scripts\activate.bat
+```
+
+```bash
+# macOS / Linux (bash / zsh):
+source .venv/bin/activate
+```
+
+> After activating, your prompt shows a `(.venv)` prefix — that's how you know it worked.
+> If PowerShell blocks the script with an *execution policy* error, run once:
+> `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, then activate again.
+
+**c. Install the Python dependencies** into the activated venv:
+
+```bash
 pip install -r requirements.txt
+```
 
-# 2. configure your LLM key
-cp .env.example .env        # Windows: Copy-Item .env.example .env
-#   then edit .env and paste your GROQ_API_KEY (or another provider's key)
+**d. Configure your LLM key:**
 
-# 3. run it (replace the URL with any approved-repo issue)
+```bash
+cp .env.example .env        # Windows PowerShell: Copy-Item .env.example .env
+# then edit .env and paste your GROQ_API_KEY (or another provider's key)
+```
+
+**e. Run it** (replace the URL with any approved-repo issue):
+
+```bash
 python -m agent run --issue <github-issue-url>
-#   known-good test issue:
-#   python -m agent run --issue https://github.com/spf13/cobra/issues/1816
+# known-good test issue:
+python -m agent run --issue https://github.com/spf13/cobra/issues/1816
 ```
 
 ---
