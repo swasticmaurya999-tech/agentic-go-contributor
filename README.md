@@ -76,7 +76,21 @@ A fully verified, committed run for **cobra #1816** is in `samples/cobra-1816/`.
 
 ## Quick start
 
-### 1. Get an API key (Groq — free, ≈2 minutes, no credit card)
+> **Reviewers start here.** First **clone this repo** (step 1) and grab a free API key
+> (step 2) — these are needed for *both* run paths. Then pick **one** path: **Docker**
+> (Path A, nothing installed on your host) or **native** (Path B).
+
+### 1. Clone this repository
+
+Everything below — the Docker build *and* the native setup — runs from **inside** the
+cloned folder, so do this first regardless of which path you choose:
+
+```bash
+git clone https://github.com/<your-username>/agentic-go-contributor.git
+cd agentic-go-contributor
+```
+
+### 2. Get an API key (Groq — free, ≈2 minutes, no credit card)
 
 1. Go to **https://console.groq.com** → sign in (Google/GitHub).
 2. **API Keys** (left sidebar) → **Create API Key** → name it → **Submit**.
@@ -113,20 +127,19 @@ verified test issue **`https://github.com/spf13/cobra/issues/1816`** — outputs
 **Prerequisites:** Python 3.11+, Go (1.21+), git. (Optional: `gh` CLI, only for `--open-pr`.)
 
 ```bash
-# 1. clone your submission repo and enter it
-cd agentic-go-contributor
+# (you already cloned the repo + cd'd into it in step 1 above)
 
-# 2. create a virtualenv and install Python deps
+# 1. create a virtualenv and install Python deps
 python -m venv .venv
 # Windows:  .venv\Scripts\activate
 # bash:     source .venv/bin/activate
 pip install -r requirements.txt
 
-# 3. configure your LLM key
+# 2. configure your LLM key
 cp .env.example .env        # Windows: Copy-Item .env.example .env
 #   then edit .env and paste your GROQ_API_KEY (or another provider's key)
 
-# 4. run it (replace the URL with any approved-repo issue)
+# 3. run it (replace the URL with any approved-repo issue)
 python -m agent run --issue <github-issue-url>
 #   known-good test issue:
 #   python -m agent run --issue https://github.com/spf13/cobra/issues/1816
@@ -149,7 +162,7 @@ and the matching key in `.env`.
 
 ### Getting an API key
 
-Groq's free key is covered in [Quick start → step 0](#quick-start). For the **other** providers,
+Groq's free key is covered in [Quick start → step 2](#quick-start). For the **other** providers,
 create a key in that provider's console, then set the matching key env var + `LLM_PROVIDER` in `.env`:
 
 | Provider | Where to create the key | Looks like | Set in `.env` |
